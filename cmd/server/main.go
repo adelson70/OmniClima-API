@@ -4,7 +4,11 @@ import (
 	"log"
 	"os"
 
+	"OmniClima/internal/platform/middleware"
 	"OmniClima/internal/platform/postgres"
+	"OmniClima/internal/sensor"
+	"OmniClima/internal/user"
+	"OmniClima/internal/webhook"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -23,7 +27,11 @@ func main() {
 	db := postgres.Connection(dsn)
 	_ = db
 
-	// db.AutoMigrate()
+	db.AutoMigrate(
+		&sensor.Sensor{},
+		&sensor.SensorDados{},
+		&user.User{},
+	)
 
 	r := gin.Default()
 
@@ -48,12 +56,14 @@ func main() {
 		// leisureHdl.RegisterRoutes(private)
 	}
 
-	webhook := r.Group("/webhook")
-	_ = webhook
-	// webhook.Use(authWebhookMiddleware())
+	sensorRepo := sensor.NewRepository(db)
+	sensorSvc := sensor.NewService(sensorRepo)
+	webhookHdl := webhook.NewHandler(sensorSvc)
+
+	webhookR := r.Group("/webhook")
+	webhookR.Use(middleware.AuthWebhook(db))
 	{
-		// Registro do módulo de sensores
-		// sensorHdl.RegisterRoutes(webhook)
+		webhookHdl.RegisterRoutes(webhookR)
 	}
 
 	port := os.Getenv("PORT")
