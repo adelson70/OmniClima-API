@@ -24,7 +24,11 @@ type CreateSensorInput struct {
 	Lon       *float64
 }
 
-type CreateSensorOutput struct {
+type ListSensorsInput struct {
+	UsuarioID uuid.UUID
+}
+
+type SensorOutput struct {
 	ID    uuid.UUID
 	Token string
 	Nome  string
@@ -32,11 +36,11 @@ type CreateSensorOutput struct {
 	Lon   *float64
 }
 
-func (s *Service) CreateSensor(in CreateSensorInput) (CreateSensorOutput, error) {
+func (s *Service) CreateSensor(in CreateSensorInput) (SensorOutput, error) {
 	token, err := generateSensorToken()
 
 	if err != nil {
-		return CreateSensorOutput{}, err
+		return SensorOutput{}, err
 	}
 
 	sensor := &Sensor{
@@ -48,16 +52,36 @@ func (s *Service) CreateSensor(in CreateSensorInput) (CreateSensorOutput, error)
 	}
 
 	if err := s.repo.CreateSensor(sensor); err != nil {
-		return CreateSensorOutput{}, err
+		return SensorOutput{}, err
 	}
 
-	return CreateSensorOutput{
+	return SensorOutput{
 		ID:    sensor.ID,
 		Token: sensor.Token,
 		Nome:  sensor.Nome,
 		Lat:   sensor.Lat,
 		Lon:   sensor.Lon,
 	}, nil
+}
+
+func (s *Service) ListSensors(in ListSensorsInput) ([]SensorOutput, error) {
+	sensors, err := s.repo.ListSensors(in.UsuarioID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]SensorOutput, 0, len(sensors))
+	for _, sensor := range sensors {
+		out = append(out, SensorOutput{
+			ID:    sensor.ID,
+			Token: sensor.Token,
+			Nome:  sensor.Nome,
+			Lat:   sensor.Lat,
+			Lon:   sensor.Lon,
+		})
+	}
+	return out, nil
 }
 
 type ReadingInput struct {

@@ -24,6 +24,7 @@ func NewHandler(sensorSvc *Service) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/", h.Create)
+	rg.GET("/", h.List)
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -55,6 +56,22 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, out)
+
+}
+
+func (h *Handler) List(c *gin.Context) {
+	user_id := h.userIDFromContext(c)
+
+	out, err := h.sensorSvc.ListSensors(ListSensorsInput{
+		UsuarioID: user_id,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao listar sensores do usuario"})
+		return
+	}
+
+	c.JSON(http.StatusOK, out)
 
 }
 

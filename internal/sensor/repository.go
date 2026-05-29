@@ -1,6 +1,7 @@
 package sensor
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +23,12 @@ func ValidateToken(db *gorm.DB, sensor_id, token string) (bool, error) {
 
 func (r *Repository) CreateSensor(s *Sensor) error {
 	return r.db.Create(s).Error
+}
+
+func (r *Repository) ListSensors(usuarioID uuid.UUID) ([]Sensor, error) {
+	var sensors []Sensor
+	err := r.db.Where("usuario_id = ?", usuarioID).Find(&sensors).Error
+	return sensors, err
 }
 
 func (r *Repository) CreateRecord(dado *SensorDados) error {
