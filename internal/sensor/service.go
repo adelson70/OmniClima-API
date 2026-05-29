@@ -18,25 +18,25 @@ func NewService(repo *Repository) *Service {
 }
 
 type CreateSensorInput struct {
-	UsuarioID uuid.UUID
-	Nome      string
-	Lat       *float64
-	Lon       *float64
+	UserID uuid.UUID
+	Name   string
+	Lat    *float64
+	Lon    *float64
 }
 
 type ListSensorsInput struct {
-	UsuarioID uuid.UUID
+	UserID uuid.UUID
 }
 
 type SensorInput struct {
-	SensorID  uuid.UUID
-	UsuarioID uuid.UUID
+	SensorID uuid.UUID
+	UserID   uuid.UUID
 }
 
 type SensorOutput struct {
 	ID    uuid.UUID
 	Token string
-	Nome  string
+	Name  string
 	Lat   *float64
 	Lon   *float64
 }
@@ -49,11 +49,11 @@ func (s *Service) CreateSensor(in CreateSensorInput) (SensorOutput, error) {
 	}
 
 	sensor := &Sensor{
-		UsuarioID: in.UsuarioID,
-		Lat:       in.Lat,
-		Lon:       in.Lon,
-		Token:     token,
-		Nome:      in.Nome,
+		UserID: in.UserID,
+		Lat:    in.Lat,
+		Lon:    in.Lon,
+		Token:  token,
+		Name:   in.Name,
 	}
 
 	if err := s.repo.CreateSensor(sensor); err != nil {
@@ -63,14 +63,14 @@ func (s *Service) CreateSensor(in CreateSensorInput) (SensorOutput, error) {
 	return SensorOutput{
 		ID:    sensor.ID,
 		Token: sensor.Token,
-		Nome:  sensor.Nome,
+		Name:  sensor.Name,
 		Lat:   sensor.Lat,
 		Lon:   sensor.Lon,
 	}, nil
 }
 
 func (s *Service) ListSensors(in ListSensorsInput) ([]SensorOutput, error) {
-	sensors, err := s.repo.ListSensors(in.UsuarioID)
+	sensors, err := s.repo.ListSensors(in.UserID)
 
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (s *Service) ListSensors(in ListSensorsInput) ([]SensorOutput, error) {
 		out = append(out, SensorOutput{
 			ID:    sensor.ID,
 			Token: sensor.Token,
-			Nome:  sensor.Nome,
+			Name:  sensor.Name,
 			Lat:   sensor.Lat,
 			Lon:   sensor.Lon,
 		})
@@ -90,14 +90,14 @@ func (s *Service) ListSensors(in ListSensorsInput) ([]SensorOutput, error) {
 }
 
 func (s *Service) DeleteSensor(in SensorInput) error {
-	return s.repo.DeleteSensor(in.SensorID, in.UsuarioID)
+	return s.repo.DeleteSensor(in.SensorID, in.UserID)
 }
 
 func (s *Service) RenewTokenSensor(in SensorInput) (string, error) {
-	new_token, _ := generateSensorToken()
-	err := s.repo.RenewTokenSensor(in.SensorID, in.UsuarioID, new_token)
+	newToken, _ := generateSensorToken()
+	err := s.repo.RenewTokenSensor(in.SensorID, in.UserID, newToken)
 
-	return new_token, err
+	return newToken, err
 }
 
 type ReadingInput struct {
@@ -108,7 +108,7 @@ type ReadingInput struct {
 }
 
 func (s *Service) SaveReading(in ReadingInput) error {
-	dado := &SensorDados{
+	dado := &SensorData{
 		SensorID: in.SensorID,
 		Temp:     in.Temp,
 		Umid:     in.Umid,

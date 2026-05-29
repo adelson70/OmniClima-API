@@ -9,17 +9,17 @@ import (
 
 type Sensor struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UsuarioID uuid.UUID `gorm:"type:uuid;not null;index"`
-	Nome      string    `gorm:"type:varchar;not null"`
+	UserID    uuid.UUID `gorm:"type:uuid;not null;index"`
+	Name      string    `gorm:"type:varchar;not null"`
 	Lat       *float64  `gorm:"type:double precision"`
 	Lon       *float64  `gorm:"type:double precision"`
 	Token     string    `gorm:"not null;uniqueIndex"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Dados     []SensorDados `gorm:"foreignKey:SensorID;constraint:OnDelete:CASCADE"`
+	Data      []SensorData `gorm:"foreignKey:SensorID;constraint:OnDelete:CASCADE"`
 }
 
-type SensorDados struct {
+type SensorData struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	SensorID  uuid.UUID `gorm:"type:uuid;not null;index"`
 	Temp      *float64  `gorm:"type:double precision"`
@@ -37,7 +37,7 @@ func (s *Sensor) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func (s *SensorDados) BeforeCreate(tx *gorm.DB) error {
+func (s *SensorData) BeforeCreate(tx *gorm.DB) error {
 	if s.ID == uuid.Nil {
 		s.ID = uuid.New()
 	}

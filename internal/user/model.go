@@ -9,9 +9,9 @@ import (
 
 type User struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Nome      string    `gorm:"not null;uniqueIndex"`
+	Name      string    `gorm:"not null;uniqueIndex"`
 	Email     string    `gorm:"not null;uniqueIndex"`
-	Senha     string    `gorm:"not null"`
+	Password  string    `gorm:"not null"`
 	Admin     bool      `gorm:"not null;uniqueIndex;default:false"`
 	CreatedAt time.Time
 	UpdatedAt time.Time

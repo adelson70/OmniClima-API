@@ -22,7 +22,7 @@ func AuthWebhook(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var payload WebohhokBody
 		token := c.GetHeader("x-sensor-token")
-		sensor_id := c.Param("sensor_id")
+		sensorID := c.Param("sensorID")
 		body, _ := c.GetRawData()
 
 		if err := json.Unmarshal(body, &payload); err != nil {
@@ -33,7 +33,7 @@ func AuthWebhook(db *gorm.DB) gin.HandlerFunc {
 			c.AbortWithStatusJSON(401, gin.H{"error": "token invalido"})
 			return
 		}
-		if sensor_id == "" {
+		if sensorID == "" {
 			c.AbortWithStatusJSON(401, gin.H{"error": "sensor invalido"})
 			return
 		}
@@ -43,7 +43,7 @@ func AuthWebhook(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		ok, _ := sensor.ValidateToken(db, sensor_id, token)
+		ok, _ := sensor.ValidateToken(db, sensorID, token)
 
 		if payload.Rain == nil {
 			v := false
@@ -55,7 +55,7 @@ func AuthWebhook(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("sensor_id", sensor_id)
+		c.Set("sensorID", sensorID)
 		c.Set("payload", payload)
 
 		c.Next()

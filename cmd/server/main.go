@@ -29,7 +29,7 @@ func main() {
 
 	db.AutoMigrate(
 		&sensor.Sensor{},
-		&sensor.SensorDados{},
+		&sensor.SensorData{},
 		&user.User{},
 	)
 

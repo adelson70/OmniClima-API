@@ -28,9 +28,9 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		token_jwt := parts[1]
+		tokenJWT := parts[1]
 
-		token, err := jwt.Parse(token_jwt, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenJWT, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("método de assinatura inesperado")
 			}
@@ -44,7 +44,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			c.Set("user_id", claims["user_id"])
+			c.Set("userID", claims["userID"])
 		}
 
 		c.Next()

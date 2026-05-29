@@ -17,18 +17,18 @@ func NewHandler(sensorSvc *sensor.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	rg.POST("/:sensor_id", h.HandleWeboHook)
+	rg.POST("/:sensorID", h.HandleWeboHook)
 }
 
 func (h *Handler) HandleWeboHook(c *gin.Context) {
-	sensor_id_str, _ := c.Get("sensor_id")
+	sensorIDStr, _ := c.Get("sensorID")
 	rawPayload, _ := c.Get("payload")
 
-	sensor_id, _ := uuid.Parse(sensor_id_str.(string))
+	sensorID, _ := uuid.Parse(sensorIDStr.(string))
 	body := rawPayload.(middleware.WebohhokBody)
 
 	h.sensorSvc.SaveReading(sensor.ReadingInput{
-		SensorID: sensor_id,
+		SensorID: sensorID,
 		Temp:     body.Temp,
 		Umid:     body.Umid,
 		Rain:     *body.Rain,
