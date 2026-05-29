@@ -14,7 +14,13 @@ type Handler struct {
 }
 
 type createSensorReq struct {
-	Name string   `json:"nome"`
+	Name string   `json:"name"`
+	Lat  *float64 `json:"lat"`
+	Lon  *float64 `json:"lon"`
+}
+
+type updateSensorReq struct {
+	Name *string  `json:"name"`
 	Lat  *float64 `json:"lat"`
 	Lon  *float64 `json:"lon"`
 }
@@ -28,6 +34,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/", h.List)
 	rg.DELETE("/:sensorID", h.Delete)
 	rg.POST("/renew/:sensorID", h.Renew)
+	rg.PUT("/:sensorID", h.Update)
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -111,6 +118,33 @@ func (h *Handler) Renew(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Token do sensor renovado", "newToken": newToken})
+}
+
+func (h *Handler) Update(c *gin.Context) {
+	var req updateSensorReq
+	userID := h.userIDFromContext(c)
+	sensorID := h.sensorIDExtract(c)
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "JSON Inválido"})
+		return
+	}
+
+	err := h.sensorSvc.UpdateSensor(UpdateSensorInput{
+		UserID:   userID,
+		SensorID: sensorID,
+		Name:     req.Name,
+		Lat:      req.Lat,
+		Lon:      req.Lon,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar sensor"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Sensor atualizado com sucesso"})
+
 }
 
 func (h *Handler) userIDFromContext(c *gin.Context) uuid.UUID {

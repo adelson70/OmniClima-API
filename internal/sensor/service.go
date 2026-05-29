@@ -1,9 +1,12 @@
 package sensor
 
 import (
+	"OmniClima/internal/platform/apperror"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +25,14 @@ type CreateSensorInput struct {
 	Name   string
 	Lat    *float64
 	Lon    *float64
+}
+
+type UpdateSensorInput struct {
+	UserID   uuid.UUID
+	SensorID uuid.UUID
+	Name     *string
+	Lat      *float64
+	Lon      *float64
 }
 
 type ListSensorsInput struct {
@@ -67,6 +78,35 @@ func (s *Service) CreateSensor(in CreateSensorInput) (SensorOutput, error) {
 		Lat:   sensor.Lat,
 		Lon:   sensor.Lon,
 	}, nil
+}
+
+func (s *Service) UpdateSensor(in UpdateSensorInput) error {
+
+	if !in.hasUpdates() {
+		return apperror.New(http.StatusBadRequest, "Nenhum campo para atualizar")
+	}
+
+	updates := map[string]interface{}{}
+
+	if in.Name != nil {
+		name := strings.TrimSpace(*in.Name)
+		if name == "" {
+			return apperror.New(http.StatusBadRequest, "Nome não pode ser vazio")
+		}
+		updates["name"] = name
+	}
+	if in.Lat != nil {
+		updates["lat"] = *in.Lat
+	}
+	if in.Lon != nil {
+		updates["lon"] = *in.Lon
+	}
+
+	if err := s.repo.UpdateSensor(in.SensorID, in.UserID, updates); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) ListSensors(in ListSensorsInput) ([]SensorOutput, error) {
@@ -124,4 +164,8 @@ func generateSensorToken() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("omni_%d_%s", time.Now().Unix(), hex.EncodeToString(b)), nil
+}
+
+func (in UpdateSensorInput) hasUpdates() bool {
+	return in.Name != nil || in.Lat != nil || in.Lon != nil
 }

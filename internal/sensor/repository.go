@@ -25,6 +25,22 @@ func (r *Repository) CreateSensor(s *Sensor) error {
 	return r.db.Create(s).Error
 }
 
+func (r *Repository) UpdateSensor(sensorID, userID uuid.UUID, updates map[string]interface{}) error {
+	result := r.db.Model(&Sensor{}).
+		Where("id = ? AND user_id = ?", sensorID, userID).
+		Updates(updates)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrSensorNotFound
+	}
+
+	return nil
+}
+
 func (r *Repository) ListSensors(userID uuid.UUID) ([]Sensor, error) {
 	var sensors []Sensor
 	err := r.db.Where("user_id = ?", userID).Find(&sensors).Error
