@@ -1,1 +1,65 @@
 package sensor
+
+import (
+	"net/http"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+type Handler struct {
+	sensorSvc *Service
+}
+
+type createSensorReq struct {
+	Nome string   `json:"nome"`
+	Lat  *float64 `json:"lat"`
+	Lon  *float64 `json:"lon"`
+}
+
+func NewHandler(sensorSvc *Service) *Handler {
+	return &Handler{sensorSvc: sensorSvc}
+}
+
+func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
+	rg.POST("/", h.Create)
+}
+
+func (h *Handler) Create(c *gin.Context) {
+	var req createSensorReq
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "JSON Inválido"})
+		return
+	}
+
+	user_id := h.userIDFromContext(c)
+
+	nome := strings.TrimSpace(req.Nome)
+	if nome == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nome é Obrigatório"})
+		return
+	}
+
+	out, err := h.sensorSvc.CreateSensor(CreateSensorInput{
+		UsuarioID: user_id,
+		Nome:      nome,
+		Lat:       req.Lat,
+		Lon:       req.Lon,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar sensor"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, out)
+
+}
+
+func (h *Handler) userIDFromContext(c *gin.Context) uuid.UUID {
+	user_id_raw, _ := c.Get("user_id")
+	user_id, _ := uuid.Parse(user_id_raw.(string))
+	return user_id
+}

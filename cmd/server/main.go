@@ -35,6 +35,11 @@ func main() {
 
 	r := gin.Default()
 
+	sensorRepo := sensor.NewRepository(db)
+	sensorSvc := sensor.NewService(sensorRepo)
+	sensorHdl := sensor.NewHandler(sensorSvc)
+	webhookHdl := webhook.NewHandler(sensorSvc)
+
 	public := r.Group("/")
 	{
 		public.GET("/", func(c *gin.Context) {
@@ -46,19 +51,15 @@ func main() {
 	}
 
 	private := r.Group("/api")
-	_ = private
-	// private.Use(authMiddleware())
+	private.Use(middleware.AuthMiddleware(db))
 	{
-		// Aqui você registra os módulos que exigem login do usuário
+		sensors := private.Group("/sensors")
+		sensorHdl.RegisterRoutes(sensors)
 		// userHdl.RegisterRoutes(private)
 		// wearHdl.RegisterRoutes(private)
 		// sportsHdl.RegisterRoutes(private)
 		// leisureHdl.RegisterRoutes(private)
 	}
-
-	sensorRepo := sensor.NewRepository(db)
-	sensorSvc := sensor.NewService(sensorRepo)
-	webhookHdl := webhook.NewHandler(sensorSvc)
 
 	webhookR := r.Group("/webhook")
 	webhookR.Use(middleware.AuthWebhook(db))
@@ -68,7 +69,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "3000"
 	}
 
 	log.Printf("Servidor rodando na porta %s", port)

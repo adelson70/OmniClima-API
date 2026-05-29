@@ -4,8 +4,6 @@ import (
 	"OmniClima/internal/sensor"
 	"encoding/json"
 
-	//"fmt"
-
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -30,10 +28,6 @@ func AuthWebhook(db *gorm.DB) gin.HandlerFunc {
 		if err := json.Unmarshal(body, &payload); err != nil {
 			c.AbortWithStatusJSON(400, gin.H{"error": "json invalido"})
 		}
-
-		//fmt.Println("body:", payload)
-		//fmt.Println("token:", token)
-		//fmt.Println("sensor_id:", sensor_id)
 
 		if token == "" {
 			c.AbortWithStatusJSON(401, gin.H{"error": "token invalido"})

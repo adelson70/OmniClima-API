@@ -10,6 +10,7 @@ import (
 type Sensor struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	UsuarioID uuid.UUID `gorm:"type:uuid;not null;index"`
+	Nome      string    `gorm:"type:varchar;not null"`
 	Lat       *float64  `gorm:"type:double precision"`
 	Lon       *float64  `gorm:"type:double precision"`
 	Token     string    `gorm:"not null;uniqueIndex"`
