@@ -34,3 +34,17 @@ func (r *Repository) ListSensors(usuarioID uuid.UUID) ([]Sensor, error) {
 func (r *Repository) CreateRecord(dado *SensorDados) error {
 	return r.db.Create(dado).Error
 }
+
+func (r *Repository) DeleteSensor(sensorID, usuarioID uuid.UUID) error {
+	result := r.db.Where("id = ? AND usuario_id = ?", sensorID, usuarioID).Delete(&Sensor{})
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrSensorNotFound
+	}
+
+	return nil
+}

@@ -25,6 +25,7 @@ func NewHandler(sensorSvc *Service) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/", h.Create)
 	rg.GET("/", h.List)
+	rg.DELETE("/:sensor_id", h.Delete)
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -72,6 +73,25 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, out)
+
+}
+
+func (h *Handler) Delete(c *gin.Context) {
+	user_id := h.userIDFromContext(c)
+	sensor_id_raw, _ := c.Params.Get("sensor_id")
+	sensor_id, _ := uuid.Parse(sensor_id_raw)
+
+	err := h.sensorSvc.DeleteSensor(DeleteSensorInput{
+		SensorID:  sensor_id,
+		UsuarioID: user_id,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Sensor deletado com sucesso"})
 
 }
 

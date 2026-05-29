@@ -16,6 +16,7 @@ type Sensor struct {
 	Token     string    `gorm:"not null;uniqueIndex"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Dados     []SensorDados `gorm:"foreignKey:SensorID;constraint:OnDelete:CASCADE"`
 }
 
 type SensorDados struct {
@@ -26,6 +27,7 @@ type SensorDados struct {
 	Rain      bool      `gorm:"not null;index;default:false"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Sensor    Sensor `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 func (s *Sensor) BeforeCreate(tx *gorm.DB) error {
