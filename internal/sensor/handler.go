@@ -1,6 +1,7 @@
 package sensor
 
 import (
+	"OmniClima/internal/platform/apperror"
 	"net/http"
 	"strings"
 
@@ -87,7 +88,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		apperror.Abort(c, err)
 		return
 	}
 

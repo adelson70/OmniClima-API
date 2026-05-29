@@ -34,6 +34,7 @@ func main() {
 	)
 
 	r := gin.Default()
+	r.Use(middleware.ErrorHandler())
 
 	sensorRepo := sensor.NewRepository(db)
 	sensorSvc := sensor.NewService(sensorRepo)

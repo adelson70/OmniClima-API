@@ -1,17 +1,12 @@
 package sensor
 
-import "net/http"
+import (
+	"net/http"
 
-type HTTPError struct {
-	Status  int
-	Message string
-}
+	"OmniClima/internal/platform/apperror"
+)
 
-func (e *HTTPError) Error() string {
-	return e.Message
-}
-
-var ErrSensorNotFound = &HTTPError{
-	Status:  http.StatusNotFound,
-	Message: "Sensor não encontrado",
-}
+var (
+	ErrSensorNotFound = apperror.New(http.StatusNotFound, "Sensor não encontrado")
+	ErrSensorExists   = apperror.New(http.StatusConflict, "Sensor já existe")
+)
