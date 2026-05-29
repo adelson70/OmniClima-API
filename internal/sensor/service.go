@@ -28,7 +28,7 @@ type ListSensorsInput struct {
 	UsuarioID uuid.UUID
 }
 
-type DeleteSensorInput struct {
+type SensorInput struct {
 	SensorID  uuid.UUID
 	UsuarioID uuid.UUID
 }
@@ -89,8 +89,15 @@ func (s *Service) ListSensors(in ListSensorsInput) ([]SensorOutput, error) {
 	return out, nil
 }
 
-func (s *Service) DeleteSensor(in DeleteSensorInput) error {
+func (s *Service) DeleteSensor(in SensorInput) error {
 	return s.repo.DeleteSensor(in.SensorID, in.UsuarioID)
+}
+
+func (s *Service) RenewTokenSensor(in SensorInput) (string, error) {
+	new_token, _ := generateSensorToken()
+	err := s.repo.RenewTokenSensor(in.SensorID, in.UsuarioID, new_token)
+
+	return new_token, err
 }
 
 type ReadingInput struct {

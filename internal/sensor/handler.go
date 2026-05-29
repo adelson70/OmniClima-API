@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/", h.Create)
 	rg.GET("/", h.List)
 	rg.DELETE("/:sensor_id", h.Delete)
+	rg.POST("/renew/:sensor_id", h.Renew)
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -79,10 +80,9 @@ func (h *Handler) List(c *gin.Context) {
 
 func (h *Handler) Delete(c *gin.Context) {
 	user_id := h.userIDFromContext(c)
-	sensor_id_raw, _ := c.Params.Get("sensor_id")
-	sensor_id, _ := uuid.Parse(sensor_id_raw)
+	sensor_id := h.sensorIDExtract(c)
 
-	err := h.sensorSvc.DeleteSensor(DeleteSensorInput{
+	err := h.sensorSvc.DeleteSensor(SensorInput{
 		SensorID:  sensor_id,
 		UsuarioID: user_id,
 	})
@@ -96,8 +96,33 @@ func (h *Handler) Delete(c *gin.Context) {
 
 }
 
+func (h *Handler) Renew(c *gin.Context) {
+	user_id := h.userIDFromContext(c)
+	sensor_id := h.sensorIDExtract(c)
+
+	new_token, err := h.sensorSvc.RenewTokenSensor(SensorInput{
+		SensorID:  sensor_id,
+		UsuarioID: user_id,
+	})
+
+	if err != nil {
+		apperror.Abort(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Token do sensor renovado", "new_token": new_token})
+}
+
 func (h *Handler) userIDFromContext(c *gin.Context) uuid.UUID {
 	user_id_raw, _ := c.Get("user_id")
 	user_id, _ := uuid.Parse(user_id_raw.(string))
 	return user_id
+}
+
+func (h *Handler) sensorIDExtract(c *gin.Context) uuid.UUID {
+	sensor_id_raw, _ := c.Params.Get("sensor_id")
+	sensor_id, _ := uuid.Parse(sensor_id_raw)
+
+	return sensor_id
+
 }

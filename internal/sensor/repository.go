@@ -48,3 +48,18 @@ func (r *Repository) DeleteSensor(sensorID, usuarioID uuid.UUID) error {
 
 	return nil
 }
+
+func (r *Repository) RenewTokenSensor(sensorID, usuarioID uuid.UUID, new_token string) error {
+	result := r.db.Model(&Sensor{}).
+		Where("id=? AND usuario_id=?", sensorID, usuarioID).
+		Update("token", new_token)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrSensorNotFound
+	}
+	return nil
+
+}
