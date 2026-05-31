@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -25,6 +26,7 @@ type createUserReq struct {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("create", h.Create)
+	rg.DELETE("/", h.Delete)
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -48,4 +50,18 @@ func (h *Handler) Create(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, out)
 
+}
+
+func (h *Handler) Delete(c *gin.Context) {
+	useIDRaw, _ := c.Get("userID")
+	userID, _ := uuid.Parse(useIDRaw.(string))
+
+	err := h.userSvc.DeleteUser(userID)
+
+	if err != nil {
+		apperror.Abort(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Usuário deletado com sucesso"})
 }

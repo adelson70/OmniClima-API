@@ -79,6 +79,10 @@ func (s *Service) CreateUser(in CreateUserInput) (UserOutput, error) {
 
 }
 
+func (s *Service) DeleteUser(userID uuid.UUID) error {
+	return s.repo.DeleteUser(userID)
+}
+
 func hashPassword(password string) (string, error) {
 	costStr := os.Getenv("BCRYPT_COST")
 

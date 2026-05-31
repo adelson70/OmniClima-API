@@ -1,6 +1,7 @@
 package sensor
 
 import (
+	"OmniClima/internal/user"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ type Sensor struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Data      []SensorData `gorm:"foreignKey:SensorID;constraint:OnDelete:CASCADE"`
+	User      user.User    `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type SensorData struct {
