@@ -40,6 +40,9 @@ func main() {
 	sensorSvc := sensor.NewService(sensorRepo)
 	sensorHdl := sensor.NewHandler(sensorSvc)
 	webhookHdl := webhook.NewHandler(sensorSvc)
+	userRepo := user.NewRepository(db)
+	userSvc := user.NewService(userRepo)
+	userHdl := user.NewHandler(userSvc)
 
 	public := r.Group("/")
 	{
@@ -55,8 +58,9 @@ func main() {
 	private.Use(middleware.AuthMiddleware(db))
 	{
 		sensors := private.Group("/sensors")
+		user := private.Group("/user")
 		sensorHdl.RegisterRoutes(sensors)
-		// userHdl.RegisterRoutes(private)
+		userHdl.RegisterRoutes(user)
 		// wearHdl.RegisterRoutes(private)
 		// sportsHdl.RegisterRoutes(private)
 		// leisureHdl.RegisterRoutes(private)

@@ -9,7 +9,8 @@ import (
 
 type User struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Name      string    `gorm:"not null;uniqueIndex"`
+	FirstName string    `gorm:"not null;uniqueIndex"`
+	LastName  string    `gorm:"not null;uniqueIndex"`
 	Email     string    `gorm:"not null;uniqueIndex"`
 	Password  string    `gorm:"not null"`
 	Admin     bool      `gorm:"not null;uniqueIndex;default:false"`

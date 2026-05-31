@@ -139,7 +139,7 @@ func (h *Handler) Update(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar sensor"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar sensor"})
 		return
 	}
 

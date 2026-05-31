@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,12 @@ import (
 
 func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		if verifyRoutePass(c) {
+			c.Next()
+			return
+		}
+
 		authHeader := c.GetHeader("Authorization")
 
 		if authHeader == "" {
@@ -45,8 +52,23 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			c.Set("userID", claims["userID"])
+			c.Set("admin", claims["admin"])
 		}
 
 		c.Next()
 	}
+}
+
+func verifyRoutePass(c *gin.Context) bool {
+	routePass := []string{"user/create", "auth/login"}
+	fullPath := c.FullPath()
+	path := strings.Split(fullPath, "/api/")[1]
+
+	if slices.Contains(routePass, path) {
+		fmt.Printf("Rota %s permitida passar sem auth\n", path)
+		return true
+	}
+
+	fmt.Printf("Rota %s não permitida passar sem auth\n", path)
+	return false
 }
