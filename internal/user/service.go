@@ -28,6 +28,11 @@ type UserInput struct {
 	Password  string
 }
 
+type LoginUserInput struct {
+	Email    string
+	Password string
+}
+
 type UpdateUserInput struct {
 	UserID    uuid.UUID
 	FirstName *string
@@ -126,6 +131,31 @@ func (s *Service) UpdateUser(in UpdateUserInput) error {
 
 func (s *Service) DeleteUser(userID uuid.UUID) error {
 	return s.repo.DeleteUser(userID)
+}
+
+func (s *Service) LoginUser(in LoginUserInput) (UserOutput, error) {
+	user, err := s.repo.GetUserByEmail(in.Email)
+	if err != nil {
+		return UserOutput{}, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password)); err != nil {
+		return UserOutput{}, apperror.New(http.StatusUnauthorized, "Credenciais inválidas")
+	}
+
+	token, err := GenerateToken(user.ID, user.FirstName, user.LastName, user.Email, user.Admin)
+	if err != nil {
+		return UserOutput{}, err
+	}
+
+	return UserOutput{
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+		Token:     token,
+		Admin:     user.Admin,
+	}, nil
 }
 
 func hashPassword(password string) (string, error) {

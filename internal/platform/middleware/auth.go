@@ -60,7 +60,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 }
 
 func verifyRoutePass(c *gin.Context) bool {
-	routePass := []string{"user/create", "auth/login"}
+	routePass := []string{"user/create", "user/login"}
 	fullPath := c.FullPath()
 	path := strings.Split(fullPath, "/api/")[1]
 

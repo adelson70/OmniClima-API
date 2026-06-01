@@ -44,16 +44,6 @@ func main() {
 	userSvc := user.NewService(userRepo)
 	userHdl := user.NewHandler(userSvc)
 
-	public := r.Group("/")
-	{
-		public.GET("/", func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "Bem-vindo à API OmniClima!"})
-		})
-
-		// Registro de rotas de módulos que são públicas
-		// weatherHdl.RegisterPublicRoutes(public)
-	}
-
 	private := r.Group("/api")
 	private.Use(middleware.AuthMiddleware(db))
 	{

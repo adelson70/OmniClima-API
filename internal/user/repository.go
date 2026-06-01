@@ -56,3 +56,14 @@ func (r *Repository) DeleteUser(userID uuid.UUID) error {
 
 	return nil
 }
+
+func (r *Repository) GetUserByEmail(email string) (*User, error) {
+	var user User
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &user, nil
+}

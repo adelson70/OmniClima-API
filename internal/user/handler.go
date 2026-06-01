@@ -31,10 +31,16 @@ type updateUserReq struct {
 	Password  *string `json:"password"`
 }
 
+type loginUserReq struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("create", h.Create)
-	rg.PUT("/", h.Update)
-	rg.DELETE("/", h.Delete)
+	rg.POST("login", h.Login)
+	rg.PUT("", h.Update)
+	rg.DELETE("", h.Delete)
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -60,6 +66,26 @@ func (h *Handler) Create(c *gin.Context) {
 
 }
 
+func (h *Handler) Login(c *gin.Context) {
+	var req loginUserReq
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "JSON Inválido"})
+		return
+	}
+
+	out, err := h.userSvc.LoginUser(LoginUserInput{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+
+	if err != nil {
+		apperror.Abort(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, out)
+}
 func (h *Handler) Update(c *gin.Context) {
 	useIDRaw, _ := c.Get("userID")
 	userID, _ := uuid.Parse(useIDRaw.(string))
