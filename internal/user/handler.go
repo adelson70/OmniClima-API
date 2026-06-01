@@ -24,8 +24,16 @@ type createUserReq struct {
 	Password  string `json:"password" binding:"required"`
 }
 
+type updateUserReq struct {
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Email     *string `json:"email"`
+	Password  *string `json:"password"`
+}
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("create", h.Create)
+	rg.PUT("/", h.Update)
 	rg.DELETE("/", h.Delete)
 }
 
@@ -36,7 +44,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	out, err := h.userSvc.CreateUser(CreateUserInput{
+	out, err := h.userSvc.CreateUser(UserInput{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Email:     req.Email,
@@ -49,6 +57,33 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, out)
+
+}
+
+func (h *Handler) Update(c *gin.Context) {
+	useIDRaw, _ := c.Get("userID")
+	userID, _ := uuid.Parse(useIDRaw.(string))
+	var req updateUserReq
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "JSON Inválido"})
+		return
+	}
+
+	err := h.userSvc.UpdateUser(UpdateUserInput{
+		UserID:    userID,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Email:     req.Email,
+		Password:  req.Password,
+	})
+
+	if err != nil {
+		apperror.Abort(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "usuário atualizado com sucesso"})
 
 }
 

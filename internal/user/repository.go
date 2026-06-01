@@ -27,6 +27,22 @@ func (r *Repository) CreateUser(u *User) error {
 	return nil
 }
 
+func (r *Repository) UpdateUser(userID uuid.UUID, updates map[string]interface{}) error {
+	result := r.db.Model(&User{}).
+		Where("id = ?", userID).
+		Updates(updates)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
 func (r *Repository) DeleteUser(userID uuid.UUID) error {
 	result := r.db.Where("id = ?", userID).Delete(&User{})
 
