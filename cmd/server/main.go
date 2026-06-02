@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"OmniClima/internal/locations"
 	"OmniClima/internal/platform/middleware"
 	"OmniClima/internal/platform/postgres"
 	"OmniClima/internal/sensor"
@@ -31,6 +32,7 @@ func main() {
 		&sensor.Sensor{},
 		&sensor.SensorData{},
 		&user.User{},
+		&locations.Location{},
 	)
 
 	r := gin.Default()
@@ -43,6 +45,9 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userSvc := user.NewService(userRepo)
 	userHdl := user.NewHandler(userSvc)
+	locationRepo := locations.NewRepository(db)
+	locationSvc := locations.NewService(locationRepo)
+	locationHdl := locations.NewHandler(locationSvc)
 
 	private := r.Group("/api")
 	private.Use(middleware.AuthMiddleware(db))
@@ -51,9 +56,8 @@ func main() {
 		user := private.Group("/user")
 		sensorHdl.RegisterRoutes(sensors)
 		userHdl.RegisterRoutes(user)
-		// wearHdl.RegisterRoutes(private)
-		// sportsHdl.RegisterRoutes(private)
-		// leisureHdl.RegisterRoutes(private)
+		locations := private.Group("/locations")
+		locationHdl.RegisterRoutes(locations)
 	}
 
 	webhookR := r.Group("/webhook")
