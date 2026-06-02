@@ -40,43 +40,82 @@ func AuthMiddleware(deviceSvc *devices.Service) gin.HandlerFunc {
 			return
 		}
 
-		authHeader := c.GetHeader("Authorization")
+		// authHeader := c.GetHeader("Authorization")
 
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Header sem Auth"})
-			c.Abort()
-			return
-		}
+		// if authHeader == "" {
+		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Header sem Auth"})
+		// 	c.Abort()
+		// 	return
+		// }
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Formato do header inválido"})
-			c.Abort()
-			return
-		}
+		// parts := strings.Split(authHeader, " ")
+		// if len(parts) != 2 || parts[0] != "Bearer" {
+		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Formato do header inválido"})
+		// 	c.Abort()
+		// 	return
+		// }
 
-		tokenJWT := parts[1]
+		// tokenJWT := parts[1]
 
-		token, err := jwt.Parse(tokenJWT, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("método de assinatura inesperado")
-			}
-			return []byte(os.Getenv("JWT_SECRET")), nil
-		})
+		// token, err := jwt.Parse(tokenJWT, func(token *jwt.Token) (interface{}, error) {
+		// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		// 		return nil, fmt.Errorf("método de assinatura inesperado")
+		// 	}
+		// 	return []byte(os.Getenv("JWT_SECRET")), nil
+		// })
 
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido ou expirado"})
-			c.Abort()
-			return
-		}
+		// if err != nil || !token.Valid {
+		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido ou expirado"})
+		// 	c.Abort()
+		// 	return
+		// }
 
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			c.Set("userID", claims["userID"])
-			c.Set("admin", claims["admin"])
-		}
+		// if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		// 	c.Set("userID", claims["userID"])
+		// 	c.Set("admin", claims["admin"])
 
-		c.Next()
+		verifyAuth(c)
 	}
+}
+
+func verifyAuth(c *gin.Context) bool {
+	authHeader := c.GetHeader("Authorization")
+
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Header sem Auth"})
+		c.Abort()
+		return false
+	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Formato do header inválido"})
+		c.Abort()
+		return false
+	}
+
+	tokenJWT := parts[1]
+
+	token, err := jwt.Parse(tokenJWT, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("método de assinatura inesperado")
+		}
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido ou expirado"})
+		c.Abort()
+		return false
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		c.Set("userID", claims["userID"])
+		c.Set("admin", claims["admin"])
+	}
+
+	c.Next()
+	return true
 }
 
 func verifyRoutePass(c *gin.Context) bool {
@@ -101,6 +140,7 @@ func verifyDevicePass(
 	c *gin.Context,
 	deviceSvc *devices.Service,
 ) (bool, string) {
+	authHeader := c.GetHeader("Authorization")
 
 	latStr := c.Param("lat")
 	lonStr := c.Param("lon")
@@ -131,6 +171,15 @@ func verifyDevicePass(
 		return false, "longitude inválida"
 	}
 
+	if authHeader != "" {
+		fmt.Println("Não precisa verificar assinatura pois ja est autenticado")
+		verifyAuth(c)
+		c.Set("lat", lat)
+		c.Set("lon", lon)
+		c.Next()
+		return true, ""
+	}
+
 	message := []byte(
 		fmt.Sprintf(
 			`{"lat":%.4f,"lon":%.4f}`,
@@ -152,6 +201,7 @@ func verifyDevicePass(
 		return false, "assinatura inválida"
 	}
 
+	fmt.Println("assinatura valida")
 	c.Set("lat", lat)
 	c.Set("lon", lon)
 
