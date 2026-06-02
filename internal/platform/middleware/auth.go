@@ -1,19 +1,39 @@
 package middleware
 
 import (
+	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
+
+	"OmniClima/internal/devices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
-func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
+func isSuggestionsRoute(c *gin.Context) bool {
+	return strings.HasPrefix(c.Request.URL.Path, "/api/suggestions/")
+}
+
+func AuthMiddleware(deviceSvc *devices.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		if isSuggestionsRoute(c) {
+			ok, reason := verifyDevicePass(c, deviceSvc)
+			if ok {
+				c.Next()
+				return
+			}
+			c.JSON(http.StatusUnauthorized, gin.H{"error": reason})
+			c.Abort()
+			return
+		}
 
 		if verifyRoutePass(c) {
 			c.Next()
@@ -60,9 +80,13 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 }
 
 func verifyRoutePass(c *gin.Context) bool {
-	routePass := []string{"user/create", "user/login"}
+	routePass := []string{"user/create", "user/login", "devices/"}
 	fullPath := c.FullPath()
 	path := strings.Split(fullPath, "/api/")[1]
+
+	if strings.HasPrefix(path, "suggestions/") {
+		return false
+	}
 
 	if slices.Contains(routePass, path) {
 		fmt.Printf("Rota %s permitida passar sem auth\n", path)
@@ -71,4 +95,100 @@ func verifyRoutePass(c *gin.Context) bool {
 
 	fmt.Printf("Rota %s não permitida passar sem auth\n", path)
 	return false
+}
+
+func verifyDevicePass(
+	c *gin.Context,
+	deviceSvc *devices.Service,
+) (bool, string) {
+
+	latStr := c.Param("lat")
+	lonStr := c.Param("lon")
+
+	if latStr == "" || lonStr == "" {
+		return false, "coordenadas inválidas"
+	}
+
+	deviceIDRaw := c.GetHeader("x-device-id")
+	signatureHex := c.GetHeader("x-signature")
+
+	if deviceIDRaw == "" || signatureHex == "" {
+		return false, "headers obrigatórios"
+	}
+
+	deviceID, err := uuid.Parse(deviceIDRaw)
+	if err != nil {
+		return false, "device id inválido"
+	}
+
+	lat, err := strconv.ParseFloat(latStr, 64)
+	if err != nil {
+		return false, "latitude inválida"
+	}
+
+	lon, err := strconv.ParseFloat(lonStr, 64)
+	if err != nil {
+		return false, "longitude inválida"
+	}
+
+	message := []byte(
+		fmt.Sprintf(
+			`{"lat":%.4f,"lon":%.4f}`,
+			lat,
+			lon,
+		),
+	)
+
+	publicKey, err := deviceSvc.GetDeviceByID(deviceID)
+	if err != nil {
+		return false, "device não encontrado"
+	}
+
+	if !verifySignature(
+		publicKey,
+		message,
+		signatureHex,
+	) {
+		return false, "assinatura inválida"
+	}
+
+	c.Set("lat", lat)
+	c.Set("lon", lon)
+
+	return true, ""
+}
+
+func verifySignature(
+	publicKeyHex string,
+	message []byte,
+	signatureHex string,
+) bool {
+
+	pubBytes, err := hex.DecodeString(publicKeyHex)
+	if err != nil {
+		fmt.Println("Erro public key:", err)
+		return false
+	}
+
+	sigBytes, err := hex.DecodeString(signatureHex)
+	if err != nil {
+		fmt.Println("Erro signature:", err)
+		return false
+	}
+
+	if len(pubBytes) != ed25519.PublicKeySize {
+		fmt.Println("Public key inválida")
+		return false
+	}
+
+	if len(sigBytes) != ed25519.SignatureSize {
+		fmt.Println("Signature inválida")
+		return false
+	}
+
+	return ed25519.Verify(
+		ed25519.PublicKey(pubBytes),
+		message,
+		sigBytes,
+	)
 }
